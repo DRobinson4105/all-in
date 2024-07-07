@@ -1,0 +1,10 @@
+numpy
+opencv-python
+torch
+ultralytics
+transformers
+accelerate
+bitsandbytes
+sentencepiece
+protobuf
+lapx
