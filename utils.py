@@ -11,13 +11,13 @@ class mistral:
         self.bnb_config = BitsAndBytesConfig(load_in_8bit=True)
  
         self.mistral_7b_model = AutoModelForCausalLM.from_pretrained(
-            "mistral_7b_instruct", 
+            "mistral", 
             quantization_config=self.bnb_config, 
             torch_dtype=torch.float32,
             low_cpu_mem_usage=True
         )
 
-        self.mistral_7b_tokenizer = AutoTokenizer.from_pretrained("mistral_7b_instruct")
+        self.mistral_7b_tokenizer = AutoTokenizer.from_pretrained("mistral")
         self.mistral_7b_tokenizer.pad_token_id = self.mistral_7b_tokenizer.eos_token_id
 
         self.device = device
