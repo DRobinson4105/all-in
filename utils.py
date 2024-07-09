@@ -7,7 +7,7 @@ import torch
 yolov8_pose_model = YOLO("yolov8n-pose.pt")
 
 class mistral:
-    def __init__(self, device):
+    def __init__(self, device="cpu"):
         self.bnb_config = BitsAndBytesConfig(load_in_8bit=True)
  
         self.mistral_7b_model = AutoModelForCausalLM.from_pretrained(
