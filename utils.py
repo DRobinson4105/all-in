@@ -1,25 +1,24 @@
 import cv2
 from ultralytics import YOLO
 import numpy as np
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+from transformers import (
+    AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig,
+    AutoProcessor, Blip2ForConditionalGeneration
+)
 import torch
 
 yolov8_pose_model = YOLO("yolov8n-pose.pt")
 
 class mistral:
     def __init__(self, device="cpu"):
-        self.bnb_config = BitsAndBytesConfig(load_in_8bit=True)
- 
         self.mistral_7b_model = AutoModelForCausalLM.from_pretrained(
             "mistral", 
-            quantization_config=self.bnb_config, 
+            quantization_config=BitsAndBytesConfig(load_in_8bit=True), 
             torch_dtype=torch.float32,
             low_cpu_mem_usage=True
         )
-
         self.mistral_7b_tokenizer = AutoTokenizer.from_pretrained("mistral")
         self.mistral_7b_tokenizer.pad_token_id = self.mistral_7b_tokenizer.eos_token_id
-
         self.device = device
     
     def run_inference(self, context, prompt):
@@ -33,6 +32,27 @@ class mistral:
         output = decoded[0]
         result = output[output.find("[/INST]")+7:output.find("</s>")].replace(" ", "").lower()
         return result
+    
+class blip2:
+    def __init__(self, device="cpu"):
+        self.model = Blip2ForConditionalGeneration.from_pretrained(
+            "Salesforce/blip2-opt-2.7b",
+            quantization_config=BitsAndBytesConfig(load_in_8bit=True),
+            torch_dtype=torch.float16,
+            low_cpu_mem_usage=True
+        )
+        self.processor = AutoProcessor.from_pretrained("Salesforce/blip2-opt-2.7b")
+        self.device = device
+    
+    def run_inference(self, image, prompt):
+        prompt = f"Question: {prompt} Answer:" 
+
+        inputs = self.processor(image, text=prompt, return_tensors="pt").to(self.device, torch.float16)
+
+        generated_ids = self.model.generate(**inputs, max_new_tokens=10)
+        generated_text = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0].strip()
+
+        return generated_text
 
 def calculate_angle(a, b, c):
     a, b, c = np.array(a), np.array(b), np.array(c)
