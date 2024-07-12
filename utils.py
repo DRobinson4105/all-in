@@ -6,18 +6,22 @@ from transformers import (
     AutoProcessor, Blip2ForConditionalGeneration
 )
 import torch
+import os
+
+current_dir = os.getcwd()
+mistral_dir = os.path.join(current_dir, 'mistral')
 
 yolov8_pose_model = YOLO("yolov8n-pose.pt")
 
 class mistral:
     def __init__(self, device="cpu"):
         self.mistral_7b_model = AutoModelForCausalLM.from_pretrained(
-            "mistral", 
+            mistral_dir, 
             quantization_config=BitsAndBytesConfig(load_in_8bit=True), 
             torch_dtype=torch.float32,
             low_cpu_mem_usage=True
         )
-        self.mistral_7b_tokenizer = AutoTokenizer.from_pretrained("mistral")
+        self.mistral_7b_tokenizer = AutoTokenizer.from_pretrained(mistral_dir)
         self.mistral_7b_tokenizer.pad_token_id = self.mistral_7b_tokenizer.eos_token_id
         self.device = device
     

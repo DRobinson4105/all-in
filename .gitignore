@@ -1,3 +1,4 @@
 __pycache__
 .venv
 mistral
+yolov8n-pose.pt
