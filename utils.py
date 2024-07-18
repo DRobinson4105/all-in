@@ -8,13 +8,10 @@ from transformers import (
 import torch
 import os
 
-current_dir = os.getcwd()
-mistral_dir = os.path.join(current_dir, 'mistral')
-
 yolov8_pose_model = YOLO("yolov8n-pose.pt")
 
 class mistral:
-    def __init__(self, device="cpu"):
+    def __init__(self, device="cpu", mistral_dir="mistral"):
         self.mistral_7b_model = AutoModelForCausalLM.from_pretrained(
             mistral_dir, 
             quantization_config=BitsAndBytesConfig(load_in_8bit=True), 
@@ -30,11 +27,12 @@ class mistral:
         encoded = self.mistral_7b_tokenizer.apply_chat_template(messages, return_tensors="pt")
         model_inputs = encoded.to(self.device)
 
-        generated_ids = self.mistral_7b_model.generate(model_inputs, max_new_tokens=100, do_sample=True)
+        generated_ids = self.mistral_7b_model.generate(model_inputs, max_new_tokens=100, do_sample=True, temperature=0.01)
         decoded = self.mistral_7b_tokenizer.batch_decode(generated_ids)
 
         output = decoded[0]
-        result = output[output.find("[/INST]")+7:output.find("</s>")].replace(" ", "").lower()
+        result = output[output.find("[/INST]")+7:output.find("</s>")].lower()
+        result = "".join(result.split()).replace("'", "")
         return result
     
 class blip2:
@@ -54,7 +52,8 @@ class blip2:
         inputs = self.processor(image, text=prompt, return_tensors="pt").to(self.device, torch.float16)
 
         generated_ids = self.model.generate(**inputs, max_new_tokens=10)
-        generated_text = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0].strip()
+        generated_text = self.processor.batch_decode(generated_ids, skip_special_tokens=True)[0].lower()
+        generated_text = "".join(generated_text.split()).replace("'", "")
 
         return generated_text
 
@@ -66,7 +65,7 @@ def calculate_angle(a, b, c):
         angle = 360 - angle
     return angle
 
-def pose_count(pose_type):    
+def pose_count(pose_type, cap):    
     # line_thickness=2 #display
     kpts_to_check=[6, 8, 10]
     poseup_angle=145.0
@@ -75,7 +74,6 @@ def pose_count(pose_type):
     count = None
     stage = None
 
-    cap = cv2.VideoCapture("video.mp4")
     assert cap.isOpened(), "Error reading video file"
 
     frame_count = 0

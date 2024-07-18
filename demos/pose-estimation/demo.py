@@ -1,29 +1,31 @@
 import os
 import sys
 import torch
+import cv2
 
 sys.path.append(os.path.join(os.getcwd(), '..', '..'))
 from utils import mistral, pose_count
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-mistral = mistral(device)
+mistral_model = mistral(device, os.path.join(os.getcwd(), '..', '..', 'mistral'))
 
 task = "Do 10 push ups"
+proof = cv2.VideoCapture("video.mp4")
 
-pose_types = ["pushup", "pullup", "abworkout", "squat"]
+pose_types = ["pushup", "pullup", "squat"]
 pose_classification_prompt = f"""
 Classify the following task into the correct activity and respond with that category exactly. If
-the task is not any of these activities then respond with 'no'. These are the categories:
+the task is not any of these activities then respond with 'none'. These are the categories:
 {','.join(pose_types)}. For example, if the task is 'Do a pull up', then the output would be
 pullup.
 """
 
-pose_type = mistral.run_inference(pose_classification_prompt, task)
+pose_type = mistral_model.run_inference(pose_classification_prompt, task)
 
-if pose_type == 'no': raise ValueError("Not a valid video")
+if pose_type == 'none': raise ValueError("Not a valid video")
 print(f"Task is classified as {pose_type}")
 
-result = str(pose_count(pose_type))
+result = str(pose_count(pose_type, proof))
 print(f"{result} repetitions done")
 task_verification_prompt = f"""
 Given the result of the count from the pose estimation model, determine if the task, {task}, was
@@ -32,6 +34,6 @@ was to do 5 pull ups, the task would be completed. Just output 'yes' if the task
 'no' if the task was not completed
 """
 
-output = mistral.run_inference(task_verification_prompt, result)
+output = mistral_model.run_inference(task_verification_prompt, result)
 passed = output == "yes"
-print("Completed task" if passed else "Did not complete task")
+print("Task completed" if passed else "Task not completed")

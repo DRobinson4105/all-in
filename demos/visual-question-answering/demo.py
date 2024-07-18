@@ -4,18 +4,16 @@ import os
 import sys
 
 sys.path.append(os.path.join(os.getcwd(), '..', '..'))
-from utils import blip2
+from utils import blip2, mistral
+
+task = "Have good posture"
+proof = Image.open("bad_posture.png")
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-blip2 = blip2(device=device)
-question = "Does the person have good posture or bad posture?"
+blip2_model = blip2(device)
+mistral_model = mistral(device, os.path.join(os.getcwd(), '..', '..', 'mistral'))
 
-# Good posture
-image = Image.open("good_posture.png")
-answer = blip2.run_inference(image, question)
-print(f"{question} {answer}")
-
-# Bad posture
-image = Image.open("bad_posture.png")
-answer = blip2.run_inference(image, question)
-print(f"{question} {answer}")
+output = blip2_model.run_inference(proof, f"Determine if the task, {task}, is met from this image as proof (just answer 'yes' or 'no' or if the answer cannot be verified, respond with 'unknown')")
+passed = output == "yes"
+print(output)
+print("Task completed" if passed else "Task not completed")
