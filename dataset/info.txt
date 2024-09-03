@@ -1,0 +1,4 @@
+book: "today's reading progress" "read a book"
+toothbrush: "toohbrush with toothpaste on" "brushing teeth"
+inbox: "empty inbox" "no email"
+gym: "inside gym" "inside boxing gym"

@@ -6,7 +6,6 @@ from transformers import (
     AutoProcessor, Blip2ForConditionalGeneration
 )
 import torch
-import os
 
 yolov8_pose_model = YOLO("yolov8n-pose.pt")
 
